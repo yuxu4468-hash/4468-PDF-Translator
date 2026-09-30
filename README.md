@@ -1,4 +1,4 @@
-# AI PDF 翻译器 · 4468-PDF-Translator
+# 4468-PDF-Translator
 
 > 基于 AI 大模型的轻量化 PDF 嵌字翻译工具 —— 保留原版式与图形，只把文字换成译文。
 > 本地运行、界面操作，不需要 GPU，不需要下载模型，总依赖只有 3 个 Python 库。
