@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PDF 文档翻译器</title>
+<!-- Flask 默认将 static/ 挂在 /static，这里直接写死相对根路径，无需模板变量 -->
+<link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ======================= 全局 toast 容器 ======================= -->
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ======================= 顶部栏 ======================= -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        <path d="M14 3v5h5" />
+        <path d="M9 13h6M9 16.5h4" />
+      </svg>
+    </span>
+    <div class="brand">
+      <h1 class="app-name">PDF 文档翻译器</h1>
+      <p class="app-sub">基于 AI 大模型的 PDF 版式还原翻译</p>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <div class="status-chips">
+      <span class="chip" id="chipConnection"><i class="dot dot-muted"></i>检测中…</span>
+      <span class="chip" id="chipPymupdf">PyMuPDF —</span>
+      <span class="chip" id="chipFont">中文字体 —</span>
+      <span class="chip" id="chipNetwork">网络 —</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="btnSysInfo" type="button">系统信息</button>
+  </div>
+</header>
+
+<!-- ======================= 主体布局 ======================= -->
+<main class="layout">
+
+  <!-- ======================= 左侧操作栏 ======================= -->
+  <aside class="sidebar">
+
+    <!-- ---------- 1. 文件区 ---------- -->
+    <section class="card">
+      <div class="card-head">
+        <h2 class="card-title"><span class="step-badge">1</span>上传 PDF</h2>
+        <button class="btn btn-text btn-sm hidden" id="btnClearFile" type="button">移除</button>
+      </div>
+      <div class="card-body">
+
+        <div class="dropzone" id="dropZone" role="button" tabindex="0" aria-label="拖拽 PDF 到此处，或点击选择文件">
+          <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 16V4m0 0L8 8m4-4 4 4" />
+            <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+          </svg>
+          <p class="dz-title">把 PDF 文件拖到这里</p>
+          <p class="dz-sub">或</p>
+          <span class="btn btn-primary btn-sm" id="btnPickFile">选择 PDF 文件</span>
+          <p class="dz-hint">仅支持单个 .pdf 文件，完全在本机处理</p>
+          <input type="file" id="fileInput" accept="application/pdf,.pdf" hidden />
+        </div>
+
+        <!-- 上传进度 -->
+        <div class="upload-state hidden" id="uploadState">
+          <div class="progress progress-thin"><div class="progress-bar" id="uploadBar"></div></div>
+          <p class="upload-text" id="uploadText">正在上传…</p>
+        </div>
+
+        <!-- 上传结果 -->
+        <div class="file-info hidden" id="fileInfo">
+          <div class="file-name-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+              <path d="M14 3v5h5" />
+            </svg>
+            <span class="file-name" id="fiName">—</span>
+          </div>
+          <div class="kv-grid">
+            <div class="kv"><span class="kv-k">页数</span><span class="kv-v" id="fiPages">—</span></div>
+            <div class="kv"><span class="kv-k">大小</span><span class="kv-v" id="fiSize">—</span></div>
+            <div class="kv"><span class="kv-k">文本页</span><span class="kv-v" id="fiTextPages">—</span></div>
+            <div class="kv"><span class="kv-k">加密</span><span class="kv-v" id="fiEncrypted">—</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ---------- 2. 翻译设置 ---------- -->
+    <section class="card">
+      <div class="card-head">
+        <h2 class="card-title"><span class="step-badge">2</span>翻译设置</h2>
+      </div>
+      <div class="card-body">
+
+        <div class="field">
+          <label class="label" for="providerSelect">服务商</label>
+          <select class="input" id="providerSelect"></select>
+          <p class="field-hint" id="providerHint"></p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="baseUrl">接口地址（Base URL）</label>
+          <input class="input" id="baseUrl" type="text" spellcheck="false" placeholder="https://api.deepseek.com" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="modelSelect">模型</label>
+          <select class="input" id="modelSelect"></select>
+          <input class="input hidden mt-6" id="modelCustom" type="text" spellcheck="false" placeholder="输入自定义模型名称" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="apiKey">API Key</label>
+          <div class="input-group">
+            <input class="input" id="apiKey" type="password" spellcheck="false" autocomplete="off" placeholder="sk-..." />
+            <button class="btn btn-ghost btn-sm" id="btnToggleKey" type="button">显示</button>
+          </div>
+          <p class="field-hint">Key 仅保存在本机服务端的配置文件中，不会外传。</p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="targetLang">目标语言</label>
+          <select class="input" id="targetLang"></select>
+        </div>
+
+        <div class="field">
+          <span class="label">翻译模式</span>
+          <div class="mode-group" id="modeGroup">
+            <label class="mode-option">
+              <input type="radio" name="mode" value="mono" checked />
+              <span class="mode-card">
+                <span class="mode-title">嵌字版<em class="tag-rec">推荐</em></span>
+                <span class="mode-desc">保留原 PDF 的版式、图片与图形，只把文字换成译文</span>
+              </span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="mode" value="dual" />
+              <span class="mode-card">
+                <span class="mode-title">双语对照</span>
+                <span class="mode-desc">原文与译文一起排版，便于逐句核对</span>
+              </span>
+            </label>
+          </div>
+          <p class="field-hint">嵌字版会保留字体风格（衬线/粗体）与原文字号、行距和基线位置。</p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="pageRange">页面范围</label>
+          <input class="input" id="pageRange" type="text" value="all" spellcheck="false" placeholder="all" />
+          <p class="field-hint">默认 <code>all</code> 表示全部页面，也支持 <code>1-5,8,11-13</code> 写法。</p>
+        </div>
+
+        <!-- 高级设置（可折叠） -->
+        <details class="advanced">
+          <summary>高级设置</summary>
+          <div class="advanced-body">
+
+            <div class="range-row">
+              <label class="label" for="concurrency">并发数</label>
+              <div class="range-control">
+                <input type="range" id="concurrency" min="1" max="8" step="1" value="4" />
+                <span class="range-value" id="concurrencyVal">4</span>
+              </div>
+              <p class="field-hint">同时向大模型发起的请求数，过大可能触发限流。</p>
+            </div>
+
+            <div class="range-row">
+              <label class="label" for="batchSize">每批段落数</label>
+              <div class="range-control">
+                <input type="range" id="batchSize" min="4" max="40" step="1" value="12" />
+                <span class="range-value" id="batchSizeVal">12</span>
+              </div>
+              <p class="field-hint">单次请求携带的段落数量，越大越快但更容易超出上下文。</p>
+            </div>
+
+            <div class="range-row">
+              <label class="label" for="temperature">温度</label>
+              <div class="range-control">
+                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.3" />
+                <span class="range-value" id="temperatureVal">0.3</span>
+              </div>
+              <p class="field-hint">越低越稳定，翻译任务建议 0.2 ~ 0.4。</p>
+            </div>
+
+            <div class="range-row">
+              <label class="label" for="fontScale">字号缩放</label>
+              <div class="range-control">
+                <input type="range" id="fontScale" min="0.6" max="1.4" step="0.05" value="1" />
+                <span class="range-value" id="fontScaleVal">1.00</span>
+              </div>
+              <p class="field-hint">译文相对原文的字号比例，1.0 为等大。</p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="glossary">术语表</label>
+              <textarea class="input textarea" id="glossary" rows="4" spellcheck="false"
+                placeholder="每行一条，格式：原文=译文&#10;Transformer=变换器&#10;Embedding=嵌入"></textarea>
+              <p class="field-hint" id="glossaryHint">每行一条，格式 <code>原文=译文</code>；空行与不含 <code>=</code> 的行会被忽略。</p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="prompt">自定义提示词</label>
+              <textarea class="input textarea" id="prompt" rows="5" spellcheck="false"
+                placeholder="留空则使用服务端默认提示词"></textarea>
+            </div>
+
+          </div>
+        </details>
+
+        <!-- OCR 扫描件识别（可折叠，仅对没有文本层的扫描页生效） -->
+        <details class="advanced" id="ocrDetails">
+          <summary>OCR 扫描件识别（可选）</summary>
+          <div class="advanced-body">
+
+            <!-- 引擎与模型目录状态 -->
+            <p class="ocr-status" id="ocrEngineStatus">正在检测 OCR 引擎…</p>
+
+            <div class="field">
+              <label class="label" for="ocrMode">OCR 模式</label>
+              <select class="input" id="ocrMode"></select>
+              <p class="field-hint">默认「自动」：只对没有文本层的扫描页启用识别。</p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="ocrLang">识别语言</label>
+              <select class="input" id="ocrLang"></select>
+              <div class="ocr-lang-hint hidden" id="ocrLangHint">
+                <span id="ocrLangHintText">该语言模型未下载</span>
+                <button class="btn btn-ghost btn-sm" id="btnOcrDownload" type="button">下载模型</button>
+              </div>
+              <p class="ocr-download-state hidden" id="ocrDownloadState"></p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="ocrDpi">识别精度（DPI）</label>
+              <input class="input input-mini" id="ocrDpi" type="number" min="120" max="400" step="20" value="200" />
+              <p class="field-hint">越高越准但越慢，扫描件建议 200~300。</p>
+            </div>
+
+            <div class="range-row">
+              <label class="label" for="ocrMinConf">最低置信度</label>
+              <div class="range-control">
+                <input type="range" id="ocrMinConf" min="0" max="1" step="0.05" value="0.5" />
+                <span class="range-value" id="ocrMinConfVal">0.50</span>
+              </div>
+              <p class="field-hint">低于该置信度的识别结果会被丢弃。</p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="ocrDetVersion">检测模型版本</label>
+              <select class="input" id="ocrDetVersion">
+                <option value="v5" selected>v5（更准，推荐）</option>
+                <option value="v4">v4（体积更小）</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="ocr-check" for="ocrUseCls">
+                <input type="checkbox" id="ocrUseCls" />
+                <span>启用方向分类（自动纠正 0°/180° 颠倒的扫描页）</span>
+              </label>
+              <p class="field-hint">需要额外下载方向分类模型，仅在扫描件倒置时开启。</p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="ocrTestPage">试识别</label>
+              <div class="ocr-test-row">
+                <input class="input input-mini" id="ocrTestPage" type="number" min="1" value="1" />
+                <button class="btn btn-outline btn-sm" id="btnOcrTest" type="button">在这一页试识别</button>
+              </div>
+              <p class="field-hint" id="ocrTestHint">对已上传文档的指定页做一次识别，用于确认语言与效果。</p>
+            </div>
+
+            <p class="test-result hidden" id="ocrTestResult"></p>
+            <pre class="ocr-lines hidden" id="ocrTestLines"></pre>
+
+          </div>
+        </details>
+
+        <!-- 嵌字字体（可折叠）：译文用什么中文字体由原文风格自动匹配 -->
+        <details class="advanced" id="letteringDetails">
+          <summary>嵌字字体（可选）</summary>
+          <div class="advanced-body">
+
+            <p class="ocr-status" id="letteringStatus">正在检测本机中文字体…</p>
+
+            <div class="field">
+              <label class="label" for="letteringFamily">字体风格</label>
+              <select class="input" id="letteringFamily">
+                <option value="auto" selected>跟随原文（推荐）</option>
+                <option value="sans">一律无衬线（黑体一类）</option>
+                <option value="serif">一律衬线（宋体一类）</option>
+              </select>
+              <p class="field-hint">「跟随原文」会读取原 PDF 的字体名，衬线配衬线、加粗配粗体。</p>
+            </div>
+
+            <div class="field">
+              <label class="ocr-check" for="letteringUseSystem">
+                <input type="checkbox" id="letteringUseSystem" checked />
+                <span>使用本机已安装的中文字体</span>
+              </label>
+              <p class="field-hint">
+                关闭后只能用 MuPDF 内置字体，<strong>没有粗体字重</strong>，加粗标题会掉成常规粗细。
+              </p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="letteringRegular">指定常规字体文件（留空=自动）</label>
+              <input class="input" id="letteringRegular" type="text" spellcheck="false"
+                placeholder="例如 C:\Windows\Fonts\msyh.ttc" />
+              <p class="field-hint">
+                建议用 TrueType（<code>.ttf</code>/<code>.ttc</code>）。CFF/OTF 字库无法被正确子集化，
+                输出 PDF 会从几十 KB 膨胀到数 MB。
+              </p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="letteringBold">指定粗体字体文件（留空=自动）</label>
+              <input class="input" id="letteringBold" type="text" spellcheck="false"
+                placeholder="例如 C:\Windows\Fonts\msyhbd.ttc" />
+            </div>
+
+            <div class="range-row">
+              <label class="label" for="letteringTracking">字距拉伸上限</label>
+              <div class="range-control">
+                <input type="range" id="letteringTracking" min="0" max="0.2" step="0.01" value="0.08" />
+                <span class="range-value" id="letteringTrackingVal">0.08</span>
+              </div>
+              <p class="field-hint">
+                译文比原文短时，把行内字距拉开填满原来的行宽（上限为字号的该倍数）。0 = 关闭。
+              </p>
+            </div>
+
+            <div class="field">
+              <span class="label">当前匹配结果</span>
+              <div class="font-preview" id="letteringPreview"></div>
+              <div class="ocr-test-row">
+                <button class="btn btn-outline btn-sm" id="btnFontReload" type="button">重新检测本机字体</button>
+                <button class="btn btn-ghost btn-sm" id="btnFontList" type="button">查看全部候选</button>
+              </div>
+              <pre class="ocr-lines hidden" id="letteringFontList"></pre>
+            </div>
+
+          </div>
+        </details>
+
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btnSaveConfig" type="button">保存为默认设置</button>
+          <button class="btn btn-outline" id="btnTestConn" type="button">测试连接</button>
+        </div>
+
+        <div class="test-result hidden" id="testResult"></div>
+
+      </div>
+    </section>
+
+    <!-- ---------- 3. 操作与进度 ---------- -->
+    <section class="card">
+      <div class="card-head">
+        <h2 class="card-title"><span class="step-badge">3</span>开始翻译</h2>
+        <span class="stat" id="taskIdTag"></span>
+      </div>
+      <div class="card-body">
+
+        <button class="btn btn-primary btn-block btn-lg" id="btnStart" type="button" disabled>开始翻译</button>
+        <button class="btn btn-danger-ghost btn-block" id="btnCancel" type="button" disabled>取消翻译</button>
+        <p class="start-hint" id="startHint">请先上传 PDF 文件</p>
+
+        <div class="progress-block">
+          <div class="progress-head">
+            <span class="stage-text" id="progressStage">等待开始</span>
+            <span class="percent-text" id="progressPercent">0%</span>
+          </div>
+          <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+          <p class="progress-message" id="progressMessage">尚未开始翻译</p>
+          <div class="kv-grid kv-grid-3">
+            <div class="kv"><span class="kv-k">段落</span><span class="kv-v" id="progressParas">0 / 0</span></div>
+            <div class="kv"><span class="kv-k">耗时</span><span class="kv-v" id="progressElapsed">00:00</span></div>
+            <div class="kv"><span class="kv-k">预计剩余</span><span class="kv-v" id="progressEta">--:--</span></div>
+          </div>
+        </div>
+
+        <div class="log-head">
+          <span>运行日志</span>
+          <button class="btn btn-text btn-sm" id="btnClearLogs" type="button">清空</button>
+        </div>
+        <div class="log-panel" id="logPanel"><p class="log-empty">暂无日志</p></div>
+
+      </div>
+    </section>
+
+  </aside>
+
+  <!-- ======================= 右侧主工作区 ======================= -->
+  <section class="workspace">
+
+    <!-- 空状态 -->
+    <div class="card empty-state" id="emptyState">
+      <div class="empty-illustration" aria-hidden="true">
+        <svg viewBox="0 0 260 180" fill="none" stroke="none">
+          <rect x="26" y="26" width="92" height="124" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="2" />
+          <rect x="42" y="46" width="60" height="7" rx="3.5" fill="#c7d2fe" />
+          <rect x="42" y="62" width="46" height="7" rx="3.5" fill="#dbe3fb" />
+          <rect x="42" y="78" width="56" height="7" rx="3.5" fill="#dbe3fb" />
+          <rect x="42" y="94" width="38" height="7" rx="3.5" fill="#dbe3fb" />
+          <rect x="42" y="110" width="52" height="7" rx="3.5" fill="#dbe3fb" />
+          <rect x="142" y="26" width="92" height="124" rx="10" fill="#ffffff" stroke="#bfdbfe" stroke-width="2" />
+          <rect x="158" y="46" width="60" height="7" rx="3.5" fill="#93c5fd" />
+          <rect x="158" y="62" width="52" height="7" rx="3.5" fill="#dbeafe" />
+          <rect x="158" y="78" width="60" height="7" rx="3.5" fill="#dbeafe" />
+          <rect x="158" y="94" width="42" height="7" rx="3.5" fill="#dbeafe" />
+          <rect x="158" y="110" width="54" height="7" rx="3.5" fill="#dbeafe" />
+          <circle cx="130" cy="88" r="18" fill="#2563eb" />
+          <path d="M124 88h13m0 0-5-5m5 5-5 5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <h2 class="empty-title">还没有上传文档</h2>
+      <p class="empty-sub">上传一份 PDF，配置好大模型，即可开始版式还原翻译。</p>
+
+      <ol class="guide-steps">
+        <li class="guide-step">
+          <span class="guide-num">1</span>
+          <span class="guide-text"><strong>上传 PDF</strong><em>拖拽或点击选择文件，服务端会先解析版面</em></span>
+        </li>
+        <li class="guide-step">
+          <span class="guide-num">2</span>
+          <span class="guide-text"><strong>配置大模型</strong><em>选择服务商、填写 API Key 与模型</em></span>
+        </li>
+        <li class="guide-step">
+          <span class="guide-num">3</span>
+          <span class="guide-text"><strong>开始翻译</strong><em>实时查看进度，完成后下载双语 PDF</em></span>
+        </li>
+      </ol>
+    </div>
+
+    <!-- 工作区 -->
+    <div class="hidden" id="workArea">
+
+      <div class="card card-flush">
+        <div class="doc-banner" id="docBanner"></div>
+
+        <div class="tabs" role="tablist">
+          <button class="tab active" id="tabOriginal" data-tab="original" type="button" role="tab" aria-selected="true">原文对照</button>
+          <button class="tab" id="tabPreview" data-tab="preview" type="button" role="tab" aria-selected="false">页面预览</button>
+        </div>
+
+        <!-- 原文对照面板 -->
+        <div class="tab-panel" id="panelOriginal">
+          <div class="panel-toolbar">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+              </svg>
+              <input class="input input-search" id="paraSearch" type="search" placeholder="搜索原文或译文关键字…" spellcheck="false" />
+            </div>
+            <span class="stat" id="paraStats">共 0 段</span>
+          </div>
+          <div class="para-list" id="paraList"></div>
+          <div class="panel-footer">
+            <button class="btn btn-ghost btn-block hidden" id="btnMoreParas" type="button">显示更多段落</button>
+          </div>
+        </div>
+
+        <!-- 页面预览面板 -->
+        <div class="tab-panel hidden" id="panelPreview">
+          <div class="preview-toolbar">
+            <div class="segmented" id="previewKindSeg">
+              <button class="seg-btn active" data-kind="source" type="button">原文</button>
+              <button class="seg-btn" data-kind="target" type="button" disabled>译文</button>
+            </div>
+
+            <div class="preview-nav">
+              <button class="btn btn-ghost btn-sm" id="btnPrevPage" type="button">上一页</button>
+              <input class="input input-mini" id="pageInput" type="number" min="1" value="1" />
+              <span class="page-total">/ <span id="pageTotal">1</span></span>
+              <button class="btn btn-ghost btn-sm" id="btnNextPage" type="button">下一页</button>
+            </div>
+
+            <div class="preview-zoom">
+              <label class="label-inline" for="zoomSelect">缩放</label>
+              <select class="input input-mini" id="zoomSelect">
+                <option value="0.8">80%</option>
+                <option value="1.1">110%</option>
+                <option value="1.4" selected>140%</option>
+                <option value="1.8">180%</option>
+                <option value="2.4">240%</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="preview-stage" id="previewStage">
+            <img class="preview-img hidden" id="previewImg" alt="PDF 页面预览" />
+            <div class="preview-loading hidden" id="previewLoading"><span class="spinner"></span>正在渲染页面…</div>
+            <div class="preview-error hidden" id="previewError">
+              <p class="preview-error-title" id="previewErrorText">页面加载失败</p>
+              <p class="preview-error-sub" id="previewErrorSub">请稍后重试，或确认该页面已成功生成。</p>
+              <button class="btn btn-ghost btn-sm" id="btnPreviewRetry" type="button">重试</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 翻译产物 -->
+      <div class="card hidden" id="resultCard">
+        <div class="card-head">
+          <h2 class="card-title">翻译产物</h2>
+          <span class="stat" id="resultElapsed"></span>
+        </div>
+        <div class="card-body">
+          <div class="result-files" id="resultFiles"></div>
+          <p class="result-stats" id="resultStats"></p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<!-- ======================= 系统信息弹窗 ======================= -->
+<div class="modal-backdrop hidden" id="sysModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sysModalTitle">
+    <div class="modal-head">
+      <h2 class="modal-title" id="sysModalTitle">系统信息</h2>
+      <button class="btn btn-text btn-sm" id="btnSysClose" type="button">关闭</button>
+    </div>
+    <div class="modal-body" id="sysInfoBody"></div>
+  </div>
+</div>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/main.js"></script>
+</body>
+</html>

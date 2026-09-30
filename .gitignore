@@ -1,0 +1,34 @@
+# ---- 运行期数据（都不进仓库）----
+# 上传的原始 PDF、任务产物、译文缓存、临时文件、日志
+work/
+logs/
+temp/
+
+# ---- 密钥与个人配置 ----
+# config.json 里存着 API Key，永远不要提交；
+# 首次启动时程序会按 config/config.example.json 自动生成它。
+config/config.json
+config/history.json
+
+# ---- OCR 模型（约 43 MB，首次使用时自动下载）----
+# 下载命令：python -m src.main --download-ocr ch
+models/ocr/
+models/fonts/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+build/
+dist/
+
+# ---- 编辑器 / 系统 ----
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

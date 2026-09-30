@@ -1,0 +1,24 @@
+# 统一换行符：仓库里存 LF，检出到 Windows 时按需转换。
+# 不做这一步的话，Windows 上的 core.autocrlf 会让克隆下来的文件
+# 与仓库内容不一致，提交历史里也会出现整文件"重写"的假 diff。
+* text=auto eol=lf
+
+# Windows 批处理必须是 CRLF，否则某些环境下 cmd.exe 解析会出问题
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制 / 不要做文本转换
+*.pdf binary
+*.onnx binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.ttf binary
+*.ttc binary
+*.otf binary
+
+# 语言统计：让 GitHub 把仓库识别成 Python 项目
+*.py linguist-language=Python
+*.js linguist-language=JavaScript
+*.css linguist-language=CSS

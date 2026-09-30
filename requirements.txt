@@ -1,0 +1,42 @@
+# PDF-translater 运行依赖
+#
+# 设计目标是"轻量"：核心功能只依赖三个库，
+# 不需要 PyTorch、不需要下载模型文件。
+#
+# 安装：
+#     pip install -r requirements.txt
+
+# ---- 核心（必须）----
+
+# PDF 解析、渲染与排版回填（同时自带中日韩字体，无需额外字体文件）
+PyMuPDF>=1.24.0
+
+# 本地 Web 服务
+Flask>=3.0.0
+
+# 调用大模型 HTTP 接口（不依赖 openai SDK，保持轻量）
+requests>=2.28.0
+
+
+# ---- OCR（扫描版 PDF 需要，可选）----
+#
+# 用来识别"没有文本层"的扫描件/影印件。用的是 PP-OCR 的 ONNX 模型
+# （来自 PaddleOCR / RapidOCR），模型文件不在 pip 包里，首次使用时会自动
+# 下载到项目内的 models/ocr/ 目录（默认语言约 21 MB）。
+#
+# 不想用 OCR 的话可以不装，其余功能完全不受影响；
+# 装了以后没装模型也不会报错，只是会提示先下载模型。
+#
+# 安装：
+#     pip install onnxruntime numpy Pillow scipy
+# 下载模型：
+#     python -m src.main --download-ocr ch     # ch/en/japan/korean/latin/... 或 all
+
+# ONNX 推理（检测 + 识别）
+onnxruntime>=1.16.0
+# 图像数组运算
+numpy>=1.24.0
+# 读写与缩放页面图（OCR 预处理）
+Pillow>=10.0.0
+# 连通域标记（检测框聚类，替代 opencv / pyclipper）
+scipy>=1.10.0
