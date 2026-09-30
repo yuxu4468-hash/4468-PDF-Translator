@@ -1,7 +1,12 @@
 """配置读写。
 
-沿用 Saber-Translator 的 config_loader 设计思路：配置以 JSON 存放在项目
-`config/` 目录下，读取时与内置默认值深合并，写入时原子替换，避免半截文件。
+**配置约定**参考了 Saber-Translator（https://github.com/MashiroSaber03/Saber-Translator，
+GPL-3.0）的 `shared/config_loader.py` 思路：配置以 JSON 存放在项目 `config/` 目录下，
+读取时与内置默认值深合并（新增配置项天然有默认值），写入时先写临时文件再原子替换，
+避免半截文件。本文件是重写实现，未复制其代码；另外补了两处：
+
+  - `deep_merge` 忽略值为 `None` 的键（前端常把空输入框传成 null）；
+  - 写入前 `flush` + `fsync`，断电时也不会留下空文件。
 """
 
 from __future__ import annotations

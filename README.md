@@ -742,8 +742,23 @@ DNS 等）。常见原因是密钥填错、模型名写错、账户余额不足�
   按字符切换字体、以及"CJK 兼容表意文字会把 ToUnicode 反查表带偏"这类工程坑的
   公开记录。本项目在 `fonts.cjk_roundtrip_ok()` 里用**主动探测**处理同一个问题
   （写一小段字再读回来比对），探测项还包括空格与 ASCII 的往返。
-- **架构分层**参考了本机另一个独立项目 Saber-Translator 的
-  `app / core / interfaces / shared` 组织方式（未复制其代码，也不修改它的文件）。
+- **[Saber-Translator](https://github.com/MashiroSaber03/Saber-Translator)**
+  （GPL-3.0，Python，★3.6k）—— 一个做**漫画**翻译的开源项目（气泡检测 → OCR →
+  翻译 → 回填）。它和本项目方向不同（图片/漫画 vs PDF 文档），但在**工程分层**
+  上给了本项目直接的参考：
+
+  - 模块划分为 `app`（Web 层）/ `core`（文档处理）/ `interfaces`（外部模型适配）/
+    `shared`（通用工具）/ `plugins`（扩展点），本项目的 `src/` 目录照此组织；
+  - `shared/config_loader.py` 的**配置读写约定**也沿用了它的思路：JSON 存盘、
+    读取时与内置默认值深合并（保证新增配置项有默认值）、写入时先写临时文件再
+    原子替换（避免崩溃留下半截文件）。本项目这份实现是重写的，并补了
+    `deep_merge` 对 `null` 的处理与写入后的 `fsync`。
+
+  **没有复制它的任何代码**：本项目是原创实现，只参考了目录组织与上述配置约定；
+  它在 `core/` 里的图像处理链路（气泡检测、inpainting、manga-ocr）与本项目
+  完全无关，本项目也没有引入它依赖的任何 CV / 深度学习库。
+  （本机装的是它的 PyInstaller 打包版，本项目只读它的文件结构，不做任何修改。）
+
 - **[RapidOCR](https://github.com/RapidAI/RapidOCR)**（Apache-2.0）—— 把 PaddleOCR 的
   PP-OCR 模型转换并整理成多平台 ONNX 格式。本项目的 OCR 模型清单
   （下载 URL 与 SHA256 校验值）取自它的 `default_models.yaml`。
