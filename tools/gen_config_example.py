@@ -29,10 +29,11 @@ def main() -> int:
 
     target = ROOT / "config" / "config.example.json"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps(config, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    # 显式写 LF：Windows 上 `write_text` 默认把 "\n" 翻成 CRLF，
+    # 而仓库约定（.gitattributes）存 LF —— 不显式指定的话，每次跑完这个脚本
+    # `git status` 都会显示"已修改"，但 diff 是空的，很误导人。
+    with target.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(config, ensure_ascii=False, indent=2) + "\n")
     print(f"已写入 {target}（{len(config)} 个键）")
     return 0
 
