@@ -1,4 +1,4 @@
-# AI PDF 翻译器 · ai-pdf-translater
+# AI PDF 翻译器 · 4468-PDF-Translator
 
 > 基于 AI 大模型的轻量化 PDF 嵌字翻译工具 —— 保留原版式与图形，只把文字换成译文。
 > 本地运行、界面操作，不需要 GPU，不需要下载模型，总依赖只有 3 个 Python 库。
@@ -483,7 +483,7 @@ PDF ──► 解析 ──► 版面分析 ──► 可翻译性筛选 ──�
 ## 目录结构
 
 ```
-ai-pdf-translater/
+4468-PDF-Translator/
 ├── 启动.bat                  一键启动（自动装依赖 + 开浏览器）
 ├── requirements.txt
 ├── README.md                 本文档
@@ -806,7 +806,7 @@ DNS 等）。常见原因是密钥填错、模型名写错、账户余额不足�
 之所以是 AGPL 而不是 MIT：本项目依赖的 PyMuPDF 是 AGPL-3.0，两者必须兼容。
 
 ```
-Copyright (C) 2026 ai-pdf-translater contributors
+Copyright (C) 2026 4468-PDF-Translator contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by

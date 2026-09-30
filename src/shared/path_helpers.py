@@ -2,7 +2,7 @@
 
 目录约定（全部位于项目根目录下，便于绿色部署与整目录搬迁）：
 
-    PDF-translater/
+    4468-PDF-Translator/
         config/      配置文件
         logs/        日志
         work/        运行时数据

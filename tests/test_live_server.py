@@ -1,4 +1,4 @@
-﻿"""对「正在运行的真实服务」做端到端验证（走真实 HTTP，不是测试客户端）。
+"""对「正在运行的真实服务」做端到端验证（走真实 HTTP，不是测试客户端）。
 
 先启动服务：
     python -m src.main --no-browser --quiet
@@ -103,8 +103,18 @@ def main() -> int:
     print(f"     {data['app_name']} v{data['app_version']} | "
           f"PyMuPDF {data['pymupdf']} | 字体 {data['cjk_font']}")
 
-    # 中文必须是正确的 UTF-8（而不是乱码）
-    check(data["app_name"] == "PDF 文档翻译器", "接口返回的中文编码正确（UTF-8）")
+    # 应用元信息：名字必须与 constants.APP_NAME 一致（改名后这里是最先该发现的地方）
+    from src.shared import constants
+
+    check(data["app_name"] == constants.APP_NAME,
+          f"接口返回的应用名与代码一致（{data['app_name']}）")
+
+    # 中文必须是正确的 UTF-8（而不是乱码）。
+    # 注意：应用名现在是纯 ASCII，**不能**拿它当编码样本了 ——
+    # 这句原本断言的就是"中文能正确往返"，所以改用一个真正含中文的字段。
+    slogan = data.get("app_slogan") or ""
+    check(slogan and slogan == constants.APP_SLOGAN,
+          f"接口返回的中文编码正确（UTF-8，样本：{slogan!r}）")
     check(data["cjk_ok"] is True, "中文字体可用")
 
     # 1) 静态资源

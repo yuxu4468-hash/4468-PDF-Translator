@@ -75,6 +75,9 @@ def system_info():
     return ok(
         app_name=constants.APP_NAME,
         app_version=constants.APP_VERSION,
+        # 应用名是纯 ASCII，拿它当"中文能正确往返"的样本会失效；
+        # 这里带上中文标语，供界面显示，也供测试当编码样本。
+        app_slogan=constants.APP_SLOGAN,
         python=f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         pymupdf=fitz.version[0] if hasattr(fitz, "version") else fitz.__doc__,
         platform=f"{platform.system()}-{platform.release()}",

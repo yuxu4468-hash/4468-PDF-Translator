@@ -87,7 +87,7 @@ class BaseProvider(ABC):
         self.max_retries = max(1, int(self.config.get("max_retries") or 3))
         self.temperature = float(self.config.get("temperature", 0.3))
         self._session = requests.Session()
-        self._session.headers.update({"User-Agent": "PDF-translater/1.0"})
+        self._session.headers.update({"User-Agent": "4468-PDF-Translator/1.0"})
 
     # ---------------------------------------------------------------- 抽象
     @property

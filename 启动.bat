@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 >nul
-title PDF 文档翻译器
+title 4468-PDF-Translator
 cd /d "%~dp0"
 
 echo ============================================
-echo   PDF 文档翻译器 —— 基于 AI 大模型的 PDF 翻译
+echo   4468-PDF-Translator —— 基于 AI 大模型的 PDF 翻译
 echo ============================================
 echo.
 

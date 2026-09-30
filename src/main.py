@@ -158,7 +158,7 @@ def print_banner(url: str, font_name: str, network: bool) -> None:
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="pdf-translater",
+        prog="4468-PDF-Translator",
         description=f"{constants.APP_NAME} —— {constants.APP_SLOGAN}",
     )
     parser.add_argument("--host", default=constants.HOST, help=f"监听地址（默认 {constants.HOST}）")

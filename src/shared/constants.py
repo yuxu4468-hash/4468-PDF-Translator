@@ -1,4 +1,4 @@
-"""PDF-translater 全局常量与内置默认值。
+"""4468-PDF-Translator 全局常量与内置默认值。
 
 本模块不依赖任何项目内其他模块，供 shared / core / interfaces / app 各层引用。
 """
@@ -9,7 +9,7 @@ from __future__ import annotations
 # 应用元信息
 # ---------------------------------------------------------------------------
 
-APP_NAME = "PDF 文档翻译器"
+APP_NAME = "4468-PDF-Translator"
 APP_VERSION = "1.2.0"
 APP_SLOGAN = "基于 AI 大模型的 PDF 嵌字翻译"
 

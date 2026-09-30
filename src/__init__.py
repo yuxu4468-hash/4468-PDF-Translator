@@ -1,4 +1,4 @@
-﻿"""PDF-translater —— 基于 AI 大模型的 PDF 文档翻译器。
+"""4468-PDF-Translator —— 基于 AI 大模型的 PDF 嵌字翻译器。
 
 分层结构：
     src/shared/      通用能力（配置、路径、日志、文本工具）

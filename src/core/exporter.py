@@ -30,7 +30,7 @@ def _header_lines(document: ParsedDocument, config: dict, stats: dict) -> list[s
         f"- 翻译服务：{provider} / {model}",
         f"- 目标语言：{target}",
         "",
-        f"> 由 PDF-translater v{constants.APP_VERSION}（嵌字模式）自动生成，"
+        f"> 由 4468-PDF-Translator v{constants.APP_VERSION}（嵌字模式）自动生成，"
         f"原文与译文逐段对照。",
         "",
         "---",

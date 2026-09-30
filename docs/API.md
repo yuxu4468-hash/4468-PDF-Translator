@@ -1,4 +1,4 @@
-# PDF-translater 本地服务 API 契约
+# 4468-PDF-Translator 本地服务 API 契约
 
 服务默认监听 `http://127.0.0.1:8765`。
 所有接口返回 JSON，统一结构：
@@ -277,7 +277,7 @@ OCR 字段说明：
 {
   "ok": true,
   "data": {
-    "dir": "F:\\Translater\\PDF-translater\\models\\ocr",
+    "dir": "<项目目录>\\models\\ocr",
     "lang": "ch",
     "det": "v5",
     "ready": true,
@@ -407,13 +407,14 @@ OCR 字段说明：
 {
   "ok": true,
   "data": {
-    "app_name": "PDF 文档翻译器",
+    "app_name": "4468-PDF-Translator",
     "app_version": "1.2.0",
+    "app_slogan": "基于 AI 大模型的 PDF 嵌字翻译",
     "python": "3.11.8",
     "pymupdf": "1.27.2.3",
     "platform": "Windows-10",
     "cjk_font": "Droid Sans Fallback Regular",
-    "work_dir": "F:\\Translater\\PDF-translater\\work",
+    "work_dir": "<项目目录>\\work",
     "network": true,
     "ocr": { "ready": true, "lang": "ch", "dir": "..." }
   }

@@ -1,4 +1,4 @@
-# PDF-translater 运行依赖
+# 4468-PDF-Translator 运行依赖
 #
 # 设计目标是"轻量"：核心功能只依赖三个库，
 # 不需要 PyTorch、不需要下载模型文件。
